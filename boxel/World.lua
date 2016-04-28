@@ -1,6 +1,6 @@
-local common = require "aliax/common"
-local Cell = require "aliax/Cell"
-local Contact = require "aliax/Contact"
+local common = require "boxel/common"
+local Cell = require "boxel/Cell"
+local Contact = require "boxel/Contact"
 
 local World = {}
 World.__index = World
@@ -34,25 +34,48 @@ function World:addBodyToCell(body, x, y)
     local cell = common.get2(self.cells, x, y)
 
     if not cell then
-        cell = Cell.new({x = x, y = y})
-        common.set2(self.cells, x, y, cell)
+        cell = Cell.new({
+            world = self,
+            x = x, y = y,
+        })
     end
 
-    cell.bodies[cell] = true
+    assert(not cell.bodies[body])
+
+    for body2, _ in pairs(cell.bodies) do
+        local contact = body.contacts[body2]
+
+        if not contact then
+            contact = Contact.new({
+                world = self,
+                body1 = body, body2 = body2,
+            })
+        end
+
+        contact.cellCount = contact.cellCount + 1
+    end
+
+    cell.bodies[body] = true
 end
 
 function World:removeBodyFromCell(body, x, y)
-    local cell = common.get2(self.cells, x, y)
+    local cell = assert(common.get2(self.cells, x, y))
+    assert(cell.bodies[body])
+    cell.bodies[body] = nil
 
-    if cell then
-        cell.bodies[cell] = nil
+    for body2, _ in pairs(cell.bodies) do
+        local contact = assert(body.contacts[body2])
+        assert(contact.cellCount >= 1)
+        contact.cellCount = contact.cellCount - 1
 
-        if not next(cell.bodies) then
-            common.set2(self.cells, x, y, nil)
+        if contact.cellCount == 0 then
+            contact:destroy()
         end
     end
 
-    cell.bodies[cell] = true
+    if not next(cell.bodies) then
+        cell:destroy()
+    end
 end
 
 function World:queryPoint(x, y)
@@ -66,21 +89,29 @@ function World:queryBox(x, y, width, height)
     local cellX1, cellY1 = self:getCellIndices(x1, y1)
     local cellX2, cellY2 = self:getCellIndices(x2, y2)
 
-    local bodies = {}
+    local cellBodies = {}
 
     for cellX = cellX1, cellX2 do
         for cellY = cellY1, cellY2 do
-            local cell = common.get2(self.cells, x, y)
+            local cell = common.get2(self.cells, cellX, cellY)
 
             if cell then
-                for body, _ in pairs(cell) do
-                    bodies[body] = true
+                for body, _ in pairs(cell.bodies) do
+                    cellBodies[body] = true
                 end
             end
         end
     end
 
-    return bodies
+    local boxBodies = {}
+
+    for body, _ in pairs(cellBodies) do
+        if body:intersectsBox(x, y, width, height) then
+            boxBodies[body] = true
+        end
+    end
+
+    return boxBodies
 end
 
 function World:update(dt)
@@ -96,14 +127,7 @@ end
 
 function World:updateContacts()
     for body, _ in pairs(self.dirtyBodies) do
-        body:updateCells()
-    end
-
-    for body, _ in pairs(self.dirtyBodies) do
         body:updateContacts()
-    end
-
-    for body, _ in pairs(self.dirtyBodies) do
         body.dirty = false
     end
 
@@ -111,6 +135,8 @@ function World:updateContacts()
 end
 
 function World:draw()
+    love.graphics.setColor(0x00, 0x00, 0xff, 0xff)
+
     for x, column in pairs(self.cells) do
         for y, cell in pairs(column) do
             love.graphics.rectangle("line",
@@ -119,11 +145,19 @@ function World:draw()
         end
     end
 
+    love.graphics.setColor(0x00, 0xff, 0x00, 0xff)
+
     for body, _ in pairs(self.bodies) do
-        love.graphics.setColor(body.color)
-        love.graphics.rectangle("fill",
+        love.graphics.rectangle("line",
             body.x - 0.5 * body.width, body.y - 0.5 * body.height,
             body.width, body.height)
+    end
+
+    love.graphics.setColor(0xff, 0x00, 0x00, 0xff)
+
+    for contact, _ in pairs(self.contacts) do
+        love.graphics.line(contact.body1.x, contact.body1.y,
+            contact.body2.x, contact.body2.y)
     end
 
     love.graphics.setColor(0xff, 0xff, 0xff, 0xff)
