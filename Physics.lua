@@ -1,4 +1,4 @@
-local World = require "boxel/World"
+local unbox = require "unbox"
 
 local Physics = {}
 Physics.__index = Physics
@@ -11,7 +11,7 @@ end
 
 function Physics:init(args)
 	self.game = args.game
-	self.world = World.new({
+	self.world = unbox.newWorld({
 		cellWidth = args.cellWidth, cellHeight = args.cellHeight,
 		gravityX = args.gravityX, gravityY = args.gravityY,
 	})

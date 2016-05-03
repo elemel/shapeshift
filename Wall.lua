@@ -1,4 +1,4 @@
-local Body = require "boxel/Body"
+local unbox = require "unbox"
 
 local Wall = {}
 Wall.__index = Wall
@@ -14,7 +14,7 @@ function Wall:init(args)
 	self.physics = assert(args.physics)
 	self.game.entities[self] = true
 
-	self.body = Body.new({
+	self.body = unbox.newBody({
 		world = self.physics.world,
 		x = args.x, y = args.y,
 		width = args.width, height = args.height,

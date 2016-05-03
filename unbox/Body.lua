@@ -1,5 +1,5 @@
-local common = require "boxel/common"
-local Contact = require "boxel/Contact"
+local common = require "unbox/common"
+local Contact = require "unbox/Contact"
 
 local Body = {}
 Body.__index = Body

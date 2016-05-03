@@ -1,4 +1,4 @@
-local Body = require "boxel/Body"
+local unbox = require "unbox"
 
 local Character = {}
 Character.__index = Character
@@ -13,7 +13,7 @@ function Character:init(args)
 	self.game = assert(args.game)
 	self.physics = assert(args.physics)
 
-	self.body = Body.new({
+	self.body = unbox.newBody({
 		world = self.physics.world,
 		dynamic = true,
 		x = args.x, y = args.y,

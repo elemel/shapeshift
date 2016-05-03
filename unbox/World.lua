@@ -1,6 +1,6 @@
-local common = require "boxel/common"
-local Cell = require "boxel/Cell"
-local Contact = require "boxel/Contact"
+local common = require "unbox/common"
+local Cell = require "unbox/Cell"
+local Contact = require "unbox/Contact"
 
 local World = {}
 World.__index = World

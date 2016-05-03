@@ -1,4 +1,3 @@
-local Body = require "boxel/Body"
 local Block = require "Block"
 local Camera = require "Camera"
 local Character = require "Character"

@@ -1,4 +1,4 @@
-local common = require "boxel/common"
+local common = require "unbox/common"
 
 local Cell = {}
 Cell.__index = Cell

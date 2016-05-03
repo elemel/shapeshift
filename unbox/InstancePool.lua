@@ -7,21 +7,14 @@ function InstancePool.new()
 	return pool
 end
 
-function InstancePool:remove(mt)
-	if not self.instances[mt] then
-		self.instances[mt] = {}
-	end
-
-	local instance = table.remove(self.instances[mt])
-
-	if not instance then
-		instance = setmetatable({}, mt)
-	end
-
-	return instance
+function InstancePool:new(mt)
+	local instance = self.instances[mt] and table.remove(self.instances[mt])
+	return instance or setmetatable({}, mt)
 end
 
-function InstancePool:add(t)
+function InstancePool:recycle(t)
+	local mt = assert(getmetatable(t))
+
 	if not self.instances[mt] then
 		self.instances[mt] = {}
 	end
